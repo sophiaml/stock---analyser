@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stock Analyzer — My Investment Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f12;
+    --surface: #161920;
+    --surface2: #1e222c;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #7a7f94;
+    --hint: #4a4f63;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --green-border: rgba(74,222,128,0.2);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --red-border: rgba(248,113,113,0.2);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.08);
+    --amber-border: rgba(251,191,36,0.2);
+    --accent: #6ee7f7;
+    --accent-dim: rgba(110,231,247,0.12);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page-header {
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(110,231,247,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  h1 {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .card {
+    max-width: 700px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 2px solid transparent;
+    letter-spacing: 0.2px;
+  }
+
+  .tab:hover { color: var(--text); background: var(--surface); }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    background: var(--surface);
+  }
+
+  .tab-content { padding: 1.75rem; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  @media (max-width: 500px) {
+    .row, .row3 { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
+  .field.mb { margin-bottom: 12px; }
+
+  label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    padding: 9px 12px;
+    width: 100%;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--hint); }
+
+  select option { background: var(--surface2); color: var(--text); }
+
+  .btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(110,231,247,0.3);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+  }
+
+  .btn:hover { background: rgba(110,231,247,0.16); }
+  .btn:active { transform: scale(0.98); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 1rem;
+  }
+
+  .metric {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .metric .mlabel {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .metric .mval {
+    font-size: 22px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .metric .msub {
+    font-size: 11px;
+    color: var(--hint);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .verdict {
+    margin-top: 1rem;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .verdict .vtitle { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .verdict .vbody { font-size: 13px; line-height: 1.65; font-weight: 300; }
+
+  .verdict.green { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+  .verdict.green .vbody { color: rgba(74,222,128,0.75); }
+  .verdict.red { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+  .verdict.red .vbody { color: rgba(248,113,113,0.75); }
+  .verdict.amber { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+  .verdict.amber .vbody { color: rgba(251,191,36,0.75); }
+
+  .range-wrap { margin-top: 1.25rem; }
+  .range-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .range-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; position: relative; }
+  .range-fill { height: 100%; border-radius: 3px; position: absolute; top: 0; left: 0; }
+  .range-marker { width: 14px; height: 14px; border-radius: 50%; background: var(--text); position: absolute; top: -4px; transform: translateX(-50%); border: 2px solid var(--bg); }
+  .range-ends { display: flex; justify-content: space-between; font-size: 11px; font-family: 'DM Mono', monospace; color: var(--hint); margin-top: 6px; }
+
+  .alert-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .alert-text { font-size: 13px; color: var(--text); flex: 1; font-weight: 300; }
+  .alert-badge { font-size: 10px; font-family: 'DM Mono', monospace; padding: 3px 8px; border-radius: 4px; font-weight: 500; letter-spacing: 0.4px; }
+
+  .hidden { display: none; }
+
+  footer {
+    text-align: center;
+    margin-top: 2.5rem;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--hint);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo-row">
+    <div class="logo-icon">📈</div>
+    <h1>Stock Analyzer</h1>
+  </div>
+  <p class="subtitle">Your personal investment tool — analyze stocks, calculate risk, and set price alerts.</p>
+</div>
+
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('analysis')">Analyze stock</button>
+    <button class="tab" onclick="switchTab('risk')">Risk / reward</button>
+    <button class="tab" onclick="switchTab('alerts')">Price alerts</button>
+  </div>
+
+  <div class="tab-content">
+
+    <!-- TAB 1: ANALYSIS -->
+    <div class="section active" id="tab-analysis">
+      <div class="row">
+        <div class="field"><label>Ticker (e.g. AAPL, NVDA, ASML)</label><input id="a-ticker" placeholder="AAPL" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="field"><label>Current price ($)</label><input id="a-price" type="number" placeholder="185.50"/></div>
+      </div>
+      <div class="row3">
+        <div class="field"><label>P/E ratio</label><input id="a-pe" type="number" placeholder="28"/></div>
+        <div class="field"><label>EPS (earnings/share)</label><input id="a-eps" type="number" placeholder="6.50"/></div>
+        <div class="field"><label>Sector</label>
+          <select id="a-sector">
+            <option value="tech">Technology</option>
+            <option value="health">Healthcare</option>
+            <option value="finance">Financials</option>
+            <option value="energy">Energy</option>
+            <option value="consumer">Consumer</option>
+            <option value="industry">Industrials</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>52W high ($)</label><input id="a-high" type="number" placeholder="220"/></div>
+        <div class="field"><label>52W low ($)</label><input id="a-low" type="number" placeholder="140"/></div>
+      </div>
+      <div class="field mb"><label>Annual dividend yield (%, 0 if none)</label><input id="a-div" type="number" placeholder="0.5" step="0.1"/></div>
+      <button class="btn" onclick="analizar()">→ Analyze stock</button>
+
+      <div id="a-result" class="hidden">
+        <hr class="divider"/>
+        <div class="result-grid">
+          <div class="metric"><div class="mlabel">P/E valuation</div><div class="mval" id="r-pe-label">—</div><div class="msub" id="r-pe-sub"></div></div>
+          <div class="metric"><div class="mlabel">Fair value est.</div><div class="mval" id="r-fair">—</div><div class="msub" id="r-fair-sub"></div></div>
+          <div class="metric"><div class="mlabel">52W position</div><div class="mval" id="r-52w">—</div><div class="msub" id="r-52w-sub"></div></div>
+        </div>
+        <div class="range-wrap">
+          <div class="range-label">52-week range</div>
+          <div class="range-bar">
+            <div class="range-fill" id="r-bar-fill"></div>
+            <div class="range-marker" id="r-bar-mark"></div>
+          </div>
+          <div class="range-ends"><span id="r-low-l">Low</span><span id="r-high-l">High</span></div>
+        </div>
+        <div class="verdict" id="r-verdict">
+          <div class="vtitle" id="r-verdict-title"></div>
+          <div class="vbody" id="r-verdict-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: RISK -->
+    <div class="section" id="tab-risk">
+      <div class="row">
+        <div class="field"><label>Entry price ($)</label><input id="r-entry" type="number" placeholder="185"/></div>
+        <div class="field"><label>Capital to invest ($)</label><input id="r-capital" type="number" placeholder="500"/></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Take profit ($)</label><input id="r-tp" type="number" placeholder="210"/></div>
+        <div class="field"><label>Stop loss ($)</label><input id="r-sl" type="number" placeholder="170"/></div>
+      </div>
+      <button class="btn" onclick="calcRiesgo()">→ Calculate risk & reward</button>
+
+      <div id="r-result" class="hidden">
+        <hr class="divider"/>
+        <div class="result-grid">
+          <div class="metric"><div class="mlabel">Potential gain</div><div class="mval" id="rr-gain">—</div><div class="msub" id="rr-gain-sub"></div></div>
+          <div class="metric"><div class="mlabel">Max loss</div><div class="mval" id="rr-loss">—</div><div class="msub" id="rr-loss-sub"></div></div>
+          <div class="metric"><div class="mlabel">R/R ratio</div><div class="mval" id="rr-ratio">—</div><div class="msub" id="rr-ratio-sub"></div></div>
+        </div>
+        <div class="result-grid" style="margin-top:10px">
+          <div class="metric"><div class="mlabel">Shares to buy</div><div class="mval" id="rr-shares">—</div><div class="msub">units</div></div>
+          <div class="metric"><div class="mlabel">% gain</div><div class="mval" id="rr-pct-gain">—</div><div class="msub">on capital</div></div>
+          <div class="metric"><div class="mlabel">% loss</div><div class="mval" id="rr-pct-loss">—</div><div class="msub">on capital</div></div>
+        </div>
+        <div class="verdict" id="rr-verdict">
+          <div class="vtitle" id="rr-verdict-title"></div>
+          <div class="vbody" id="rr-verdict-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ALERTS -->
+    <div class="section" id="tab-alerts">
+      <div class="row">
+        <div class="field"><label>Ticker</label><input id="al-ticker" placeholder="NVDA" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="field"><label>Current price ($)</label><input id="al-price" type="number" placeholder="875"/></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Buy alert — trigger if drops to ($)</label><input id="al-buy" type="number" placeholder="820"/></div>
+        <div class="field"><label>Sell alert — trigger if rises to ($)</label><input id="al-sell" type="number" placeholder="950"/></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Key support ($)</label><input id="al-support" type="number" placeholder="800"/></div>
+        <div class="field"><label>Key resistance ($)</label><input id="al-resist" type="number" placeholder="970"/></div>
+      </div>
+      <button class="btn" onclick="calcAlertas()">→ Generate alert panel</button>
+
+      <div id="al-result" class="hidden">
+        <hr class="divider"/>
+        <div id="al-alerts"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>stock-analyzer · built for personal use · not financial advice</footer>
+
+<script>
+function switchTab(id) {
+  const ids = ['analysis','risk','alerts'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i] === id));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+const PE_BENCHMARKS = { tech:28, health:22, finance:14, energy:12, consumer:20, industry:18 };
+
+function analizar() {
+  const ticker = document.getElementById('a-ticker').value || '—';
+  const price = parseFloat(document.getElementById('a-price').value);
+  const pe = parseFloat(document.getElementById('a-pe').value);
+  const eps = parseFloat(document.getElementById('a-eps').value);
+  const high = parseFloat(document.getElementById('a-high').value);
+  const low = parseFloat(document.getElementById('a-low').value);
+  const div = parseFloat(document.getElementById('a-div').value) || 0;
+  const sector = document.getElementById('a-sector').value;
+  if (!price || !pe || !eps || !high || !low) { alert('Please fill in all main fields'); return; }
+
+  const benchPE = PE_BENCHMARKS[sector];
+  const fairPrice = (eps * benchPE).toFixed(2);
+  const upside = (((fairPrice - price) / price) * 100).toFixed(1);
+  const pos52 = Math.round(((price - low) / (high - low)) * 100);
+
+  document.getElementById('r-pe-label').textContent = pe <= benchPE * 0.85 ? 'Cheap' : pe <= benchPE * 1.15 ? 'Fair' : 'Expensive';
+  document.getElementById('r-pe-sub').textContent = `P/E ${pe} vs sector ${benchPE}`;
+  document.getElementById('r-fair').textContent = `$${fairPrice}`;
+  document.getElementById('r-fair-sub').textContent = `${upside > 0 ? '+' : ''}${upside}% vs current`;
+  document.getElementById('r-52w').textContent = `${pos52}%`;
+  document.getElementById('r-52w-sub').textContent = pos52 < 30 ? 'Near 52W low' : pos52 > 70 ? 'Near 52W high' : 'Mid range';
+
+  const fill = document.getElementById('r-bar-fill');
+  fill.style.width = `${pos52}%`;
+  fill.style.background = pos52 < 30 ? '#4ade80' : pos52 > 70 ? '#f87171' : '#fbbf24';
+  document.getElementById('r-bar-mark').style.left = `${pos52}%`;
+  document.getElementById('r-low-l').textContent = `$${low}`;
+  document.getElementById('r-high-l').textContent = `$${high}`;
+
+  let score = 0;
+  if (pe < benchPE) score++;
+  if (upside > 10) score++;
+  if (pos52 < 40) score++;
+  if (div > 1) score++;
+
+  const verdict = document.getElementById('r-verdict');
+  const vt = document.getElementById('r-verdict-title');
+  const vb = document.getElementById('r-verdict-body');
+
+  if (score >= 3) {
+    verdict.className = 'verdict green';
+    vt.textContent = 'Positive signal — worth investigating further';
+    vb.textContent = `${ticker} looks attractive: P/E below sector benchmark, fair value estimated at $${fairPrice} (${upside > 0 ? 'upside' : 'downside'} of ${Math.abs(upside)}%)${div > 0 ? ` and pays a ${div}% dividend` : ''}. Always dig into the fundamentals before entering.`;
+  } else if (score >= 2) {
+    verdict.className = 'verdict amber';
+    vt.textContent = 'Mixed signal — analyze more carefully';
+    vb.textContent = `${ticker} has some positives but also risks. P/E of ${pe} vs sector benchmark of ${benchPE}. Estimated fair value: $${fairPrice}.`;
+  } else {
+    verdict.className = 'verdict red';
+    vt.textContent = 'Caution — possibly overvalued';
+    vb.textContent = `${ticker} looks expensive right now. P/E of ${pe} exceeds the sector benchmark (${benchPE}) and the estimated fair value of $${fairPrice} is ${Math.abs(upside)}% below the current price.`;
+  }
+  document.getElementById('a-result').classList.remove('hidden');
+}
+
+function calcRiesgo() {
+  const entry = parseFloat(document.getElementById('r-entry').value);
+  const capital = parseFloat(document.getElementById('r-capital').value);
+  const tp = parseFloat(document.getElementById('r-tp').value);
+  const sl = parseFloat(document.getElementById('r-sl').value);
+  if (!entry || !capital || !tp || !sl) { alert('Please fill in all fields'); return; }
+  if (sl >= entry) { alert('Stop loss must be below entry price'); return; }
+  if (tp <= entry) { alert('Take profit must be above entry price'); return; }
+
+  const shares = Math.floor(capital / entry);
+  const gain = ((tp - entry) * shares).toFixed(2);
+  const loss = ((entry - sl) * shares).toFixed(2);
+  const ratio = ((tp - entry) / (entry - sl)).toFixed(2);
+  const pctGain = (((tp - entry) / entry) * 100).toFixed(1);
+  const pctLoss = (((entry - sl) / entry) * 100).toFixed(1);
+
+  document.getElementById('rr-gain').textContent = `$${gain}`;
+  document.getElementById('rr-gain-sub').textContent = `+${pctGain}% per share`;
+  document.getElementById('rr-loss').textContent = `-$${loss}`;
+  document.getElementById('rr-loss-sub').textContent = `-${pctLoss}% per share`;
+  document.getElementById('rr-ratio').textContent = `${ratio}:1`;
+  document.getElementById('rr-ratio-sub').textContent = ratio >= 2 ? 'Excellent' : ratio >= 1.5 ? 'Acceptable' : 'Too low';
+  document.getElementById('rr-shares').textContent = shares;
+  document.getElementById('rr-pct-gain').textContent = `+${pctGain}%`;
+  document.getElementById('rr-pct-loss').textContent = `-${pctLoss}%`;
+
+  const rv = document.getElementById('rr-verdict');
+  const vt = document.getElementById('rr-verdict-title');
+  const vb = document.getElementById('rr-verdict-body');
+
+  if (ratio >= 2) {
+    rv.className = 'verdict green';
+    vt.textContent = 'Good risk/reward ratio';
+    vb.textContent = `For every $1 you risk, you stand to gain $${ratio}. With ${shares} shares at $${entry}, your potential gain is $${gain} and your max loss is $${loss}. The golden rule is 2:1 or better — this trade qualifies.`;
+  } else if (ratio >= 1.5) {
+    rv.className = 'verdict amber';
+    vt.textContent = 'Acceptable ratio, but improvable';
+    vb.textContent = `Ratio of ${ratio}:1. Consider raising your take profit or tightening your stop loss to reach 2:1. Max loss: $${loss}, potential gain: $${gain}.`;
+  } else {
+    rv.className = 'verdict red';
+    vt.textContent = 'Dangerous ratio — not recommended';
+    vb.textContent = `A ratio of ${ratio}:1 is too low. You are risking $${loss} to make only $${gain}. Move your take profit higher or bring your stop loss closer to entry before trading.`;
+  }
+  document.getElementById('r-result').classList.remove('hidden');
+}
+
+function calcAlertas() {
+  const ticker = document.getElementById('al-ticker').value || '—';
+  const price = parseFloat(document.getElementById('al-price').value);
+  const buy = parseFloat(document.getElementById('al-buy').value);
+  const sell = parseFloat(document.getElementById('al-sell').value);
+  const support = parseFloat(document.getElementById('al-support').value);
+  const resist = parseFloat(document.getElementById('al-resist').value);
+  if (!price) { alert('Please enter the current price'); return; }
+
+  const alerts = [];
+  if (buy) {
+    const pct = (((price - buy) / price) * 100).toFixed(1);
+    alerts.push({ color: '#4ade80', label: 'BUY', text: `Buy alert at $${buy} — current price is ${pct}% above trigger` });
+  }
+  if (sell) {
+    const pct = (((sell - price) / price) * 100).toFixed(1);
+    alerts.push({ color: '#f87171', label: 'SELL', text: `Sell alert at $${sell} — needs to rise ${pct}% from today` });
+  }
+  if (support) {
+    const dist = (((price - support) / price) * 100).toFixed(1);
+    const near = parseFloat(dist) < 5;
+    alerts.push({ color: near ? '#fbbf24' : '#7a7f94', label: near ? 'WARNING' : 'SUPPORT', text: `Support at $${support} — ${near ? '⚠ very close, only ' + dist + '% of margin' : dist + '% above current price'}` });
+  }
+  if (resist) {
+    const dist = (((resist - price) / price) * 100).toFixed(1);
+    alerts.push({ color: '#6ee7f7', label: 'RESISTANCE', text: `Resistance at $${resist} — ${dist}% above current price` });
+  }
+
+  document.getElementById('al-alerts').innerHTML = alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-dot" style="background:${a.color}"></div>
+      <div class="alert-text">${a.text}</div>
+      <span class="alert-badge" style="background:${a.color}18;color:${a.color};border:1px solid ${a.color}30">${a.label}</span>
+    </div>
+  `).join('');
+  document.getElementById('al-result').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
